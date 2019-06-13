@@ -63,21 +63,24 @@ while True:
             pass
         mlocOld=mouseLoc
         openx,openy,openw,openh = cv2.boundingRect(np.array([[x1,y1],[x1+w1,y1+h1],[x2,y2],[x2+w2,y2+h2]]))
-        cv2.rectangle(img,(openx,openy),(openx+openw,openy+openh),(255,0,0),2)
+        # cv2.rectangle(img,(openx,openy),(openx+openw,openy+openh),(255,0,0),2)
     elif(len(conts)==1):
         x,y,w,h=cv2.boundingRect(conts[0])
         if(pinchFlag==0):
-            pinchFlag=1
-            mouse.press(Button.left)
-        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-        cx=x+w/2
-        cy=y+h/2
-        cv2.circle(img,(cx,cy),(w+h)/4,(0,0,255),2)
-        mouseLoc = mlocOld + ((cx, cy) - mlocOld) / DampingFac
-        mouseLoc2 = (sx - (mouseLoc[0] * sx / camx), mouseLoc[1] * sy / camy)
-        mouse.position = mouseLoc2
-        while mouse.position != mouseLoc2:
-            pass
-        mlocOld = mouseLoc
+            if((abs((w*h-openw*openh)*100)/(w*h))>20):
+                pinchFlag = 1
+                mouse.press(Button.left)
+                openx, openy, openw, openh = (0, 0, 0, 0)
+        else:
+            cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
+            cx=x+w/2
+            cy=y+h/2
+            cv2.circle(img,(cx,cy),(w+h)/4,(0,0,255),2)
+            mouseLoc = mlocOld + ((cx, cy) - mlocOld) / DampingFac
+            mouseLoc2 = (sx - (mouseLoc[0] * sx / camx), mouseLoc[1] * sy / camy)
+            mouse.position = mouseLoc2
+            while mouse.position != mouseLoc2:
+                pass
+            mlocOld = mouseLoc
     cv2.imshow("cam",img)
     cv2.waitKey(5)

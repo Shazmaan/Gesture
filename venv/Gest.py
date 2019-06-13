@@ -8,7 +8,7 @@ app=wx.App(False)
 (sx,sy)=wx.GetDisplaySize()
 (camx,camy)=(640,480)
 
-lowerBound=np.array([33,80,40])
+lowerBound=np.array([80,80,100])
 upperBound=np.array([102,255,255])
 
 cam= cv2.VideoCapture(0)
@@ -26,6 +26,9 @@ pinchFlag=0
 openx,openy,openw,openh= (0,0,0,0)
 
 while True:
+    # k= cv2.waitKey(10)
+    # if (k==97):
+    #     print "Hallaluejah"
     ret, img=cam.read()
     img=cv2.resize(img,(640,480))
 
@@ -46,6 +49,22 @@ while True:
             mouse.release(Button.left)
         x1,y1,w1,h1=cv2.boundingRect(conts[0])
         x2,y2,w2,h2=cv2.boundingRect(conts[1])
+
+        # font = cv2.FONT_HERSHEY_SIMPLEX
+        # bottomLeftCornerOfText = (10, 500)
+        # fontScale = 1
+        # fontColor = (255, 255, 255)
+        # lineType = 2
+
+        # font = cv2.FONT_HERSHEY_SIMPLEX
+        # cv2.putText(img, "Place region of the hand inside box and press `A`",
+        #             (5, 50), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
+
+        # cv2.putText(img, 'Press A to calibrate.' , bottomLeftCornerOfText , font , fontScale , fontColor , lineType)
+
+        # Display the image
+        # cv2.imshow("img", img)
+
         cv2.rectangle(img,(x1,y1),(x1+w1,y1+h1),(255,0,0),2)
         cv2.rectangle(img,(x2,y2),(x2+w2,y2+h2),(255,0,0),2)
         cx1=x1+w1/2
@@ -67,7 +86,7 @@ while True:
     elif(len(conts)==1):
         x,y,w,h=cv2.boundingRect(conts[0])
         if(pinchFlag==0):
-            if((abs((w*h-openw*openh)*100)/(w*h))<20):
+            if((abs((w*h-openw*openh)*100)/(w*h))<30):
                 pinchFlag = 1
                 mouse.press(Button.left)
                 openx, openy, openw, openh = (0, 0, 0, 0)

@@ -1,6 +1,8 @@
 import cv2
+import math
 import numpy as np
 from pynput.mouse import Button, Controller
+from pynput.keyboard import Key, Listener
 import wx
 mouse=Controller()
 
@@ -25,7 +27,15 @@ pinchFlag=0
 
 openx,openy,openw,openh= (0,0,0,0)
 
+check = False
+Text = "Press 'A' once to calibrate"
+
+def pressed(key):
+    print key
+
 while True:
+    # with Listener(on_press=pressed) as listener:
+    #     listener.join()
     # k= cv2.waitKey(10)
     # if (k==97):
     #     print "Hallaluejah"
@@ -42,7 +52,6 @@ while True:
 
     maskFinal=maskClose
     conts,h=cv2.findContours(maskFinal.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-
     if(len(conts)==2):
         if(pinchFlag==1):
             pinchFlag=0
@@ -56,37 +65,43 @@ while True:
         # fontColor = (255, 255, 255)
         # lineType = 2
 
-        # font = cv2.FONT_HERSHEY_SIMPLEX
-        # cv2.putText(img, "Place region of the hand inside box and press `A`",
-        #             (5, 50), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
-
         # cv2.putText(img, 'Press A to calibrate.' , bottomLeftCornerOfText , font , fontScale , fontColor , lineType)
 
         # Display the image
         # cv2.imshow("img", img)
 
-        cv2.rectangle(img,(x1,y1),(x1+w1,y1+h1),(255,0,0),2)
-        cv2.rectangle(img,(x2,y2),(x2+w2,y2+h2),(255,0,0),2)
         cx1=x1+w1/2
         cy1=y1+h1/2
         cx2=x2+w2/2
         cy2=y2+h2/2
-        cx=(cx1+cx2)/2
-        cy=(cy1+cy2)/2
-        cv2.line(img, (cx1,cy1),(cx2,cy2),(255,0,0),2)
-        cv2.circle(img, (cx,cy),2,(0,0,255),2)
-        mouseLoc = mlocOld + ((cx,cy) - mlocOld) / DampingFac
-        mouseLoc2 = (sx-(mouseLoc[0]*sx/camx), mouseLoc[1]*sy/camy)
-        mouse.position=mouseLoc2
-        while mouse.position!=mouseLoc2:
-            pass
-        mlocOld=mouseLoc
-        openx,openy,openw,openh = cv2.boundingRect(np.array([[[x1,y1],[x1+w1,y1+h1],[x2,y2],[x2+w2,y2+h2]]]))
+
+        Dx2 = (cx2 - cx1) ** 2
+        Dy2 = (cy2 - cy1) ** 2
+        sqrt2 = math.sqrt(Dx2 + Dy2)
+
+        cv2.rectangle(img, (x1, y1), (x1 + w1, y1 + h1), (255, 0, 0), 2)
+        cv2.rectangle(img, (x2, y2), (x2 + w2, y2 + h2), (255, 0, 0), 2)
+
+        cx = (cx1 + cx2) / 2
+        cy = (cy1 + cy2) / 2
+        cv2.line(img, (cx1, cy1), (cx2, cy2), (255, 0, 0), 2)
+        cv2.circle(img, (cx, cy), 2, (0, 0, 255), 2)
+
+        if(check):
+            if(sqrt2<=(sqrt+200)):
+                mouseLoc = mlocOld + ((cx,cy) - mlocOld) / DampingFac
+                mouseLoc2 = (sx-(mouseLoc[0]*sx/camx), mouseLoc[1]*sy/camy)
+                mouse.position=mouseLoc2
+                while mouse.position!=mouseLoc2:
+                    pass
+                mlocOld=mouseLoc
+                openx,openy,openw,openh = cv2.boundingRect(np.array([[[x1,y1],[x1+w1,y1+h1],[x2,y2],[x2+w2,y2+h2]]]))
         # cv2.rectangle(img,(openx,openy),(openx+openw,openy+openh),(255,0,0),2)
-    elif(len(conts)==1):
+    elif((len(conts)==1) and check):
         x,y,w,h=cv2.boundingRect(conts[0])
         if(pinchFlag==0):
             if((abs((w*h-openw*openh)*100)/(w*h))<30):
+                # print ((abs((w*h-openw*openh)*100)/(w*h)))
                 pinchFlag = 1
                 mouse.press(Button.left)
                 openx, openy, openw, openh = (0, 0, 0, 0)
@@ -101,5 +116,12 @@ while True:
             while mouse.position != mouseLoc2:
                 pass
             mlocOld = mouseLoc
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    cv2.putText(img, Text,(5, 50), font, 0.7, (255, 255, 255), 2, cv2.LINE_AA)
     cv2.imshow("cam",img)
-    cv2.waitKey(5)
+    key = cv2.waitKey(10)
+    if key == 97:
+        Dx=(cx2-cx1)**2
+        Dy=(cy2-cy1)**2
+        sqrt=math.sqrt(Dx+Dy)
+        check = True
